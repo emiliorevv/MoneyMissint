@@ -28,6 +28,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <logback.version>1.5.19</logback.version>
     </properties>
     <dependencies>
         <dependency>
@@ -55,15 +56,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
@@ -89,11 +81,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.restdocs</groupId>
-            <artifactId>spring-restdocs-mockmvc</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!-- La dependencia de spring-restdocs-mockmvc ha sido eliminada de aquí -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
@@ -118,31 +106,6 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.asciidoctor</groupId>
-                <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>generate-docs</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>process-asciidoc</goal>
-                        </goals>
-                        <configuration>
-                            <backend>html</backend>
-                            <doctype>book</doctype>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.springframework.restdocs</groupId>
-                        <artifactId>spring-restdocs-asciidoctor</artifactId>
-                        <version>${spring-restdocs.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
