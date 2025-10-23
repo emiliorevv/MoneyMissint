@@ -22,11 +22,8 @@ public class Transactions {
     private LocalDateTime transactionTime;
 
 
-    @Column(length = 30, nullable = false, unique = true)
-    private String userId;
 
-    @Column(name = "Currency of the transaction", nullable = false)
-    private String currency;
+
 
 
 
