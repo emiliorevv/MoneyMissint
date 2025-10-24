@@ -1,7 +1,21 @@
 package com.example.moneymissint.Repository;
 
+import com.example.moneymissint.Model.Category;
+import com.example.moneymissint.Model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface CategoryRepository {
+public interface CategoryRepository extends JpaRepository<Category, Long> {
+
+    List<Category> findCategoriesByCategoryName(String categoryName);
+
+    List<Category> findCategoriesById(Long id);
+
+
+    List<Category> findAllByUser(User user);
+    
+    
 }
