@@ -1,9 +1,12 @@
 package com.example.moneymissint.Model;
+import com.example.moneymissint.roles.Currency;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "Users")
 public class User {
@@ -21,7 +24,8 @@ public class User {
     @Column(length = 60, name = "password_hash", nullable = false)
     private String password;
 
-    @Column(length = 3, nullable = false)
-    private String moneyDenomination;
+    @Enumerated(EnumType.STRING)
+    @Column( nullable = false)
+    private Currency currency;
 }
 
