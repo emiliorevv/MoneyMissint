@@ -1,21 +1,19 @@
-package com.example.moneymissint.Repository;
+package com.example.moneymissint.repository;
 
 import com.example.moneymissint.Model.Category;
 import com.example.moneymissint.Model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 
-import java.util.List;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    List<Category> findCategoriesByCategoryName(String categoryName);
+    Page<Category> findCategoriesByCategoryName(String categoryName, Pageable pageable);
 
-    List<Category> findCategoriesById(Long id);
-
-
-    List<Category> findAllByUser(User user);
+    Page<Category> findAllByUser(User user, Pageable pageable);
     
     
 }
