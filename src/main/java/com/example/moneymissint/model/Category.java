@@ -1,4 +1,5 @@
-package com.example.moneymissint.Model;
+package com.example.moneymissint.model;
+import com.example.moneymissint.roles.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +17,10 @@ public class Category {
 
     @Column(nullable = false)
     private String categoryName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status status;
 
     @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

@@ -1,4 +1,4 @@
-package com.example.moneymissint.Controller;
+package com.example.moneymissint.controller;
 
 import org.springframework.stereotype.Controller;
 

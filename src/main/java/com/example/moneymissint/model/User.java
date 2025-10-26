@@ -1,5 +1,6 @@
-package com.example.moneymissint.Model;
+package com.example.moneymissint.model;
 import com.example.moneymissint.roles.Currency;
+import com.example.moneymissint.roles.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,5 +28,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column( nullable = false)
     private Currency currency;
+
+    @Enumerated(EnumType.STRING)
+    @Column( nullable = false)
+    private Status status;
 }
 

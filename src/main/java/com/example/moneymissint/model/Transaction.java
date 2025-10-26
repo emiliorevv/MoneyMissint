@@ -1,4 +1,4 @@
-package com.example.moneymissint.Model;
+package com.example.moneymissint.model;
 import com.example.moneymissint.roles.Operation;
 import jakarta.persistence.*;
 import lombok.Getter;
