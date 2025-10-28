@@ -12,12 +12,14 @@ package com.example.moneymissint.service;
 import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Status;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.StringUtils;
 import java.util.Optional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class UserService {
 
@@ -35,8 +37,8 @@ public class UserService {
 
     public User updateUser(User user) {
         Optional<User> optionalUser = userRepository.findById(user.getId());
-        if (optionalUser.isPresent()) {
-            user.setEmail(user.getEmail());
+        if (optionalUser.isPresent() && optionalUser.equals(user)) {
+            user.setEmail(user.getEmail().trim().toLowerCase());
             user.setPassword(user.getPassword());
             user.setName(user.getName());
             return userRepository.save(user);
@@ -47,7 +49,7 @@ public class UserService {
 
     public User deactivateUser(User user) {
         Optional<User> optionalUser = userRepository.findById(user.getId());
-        if(optionalUser.isPresent() && optionalUser.get().getStatus() == Status.ACTIVE) {
+        if(optionalUser.isPresent() && optionalUser.equals(user)&& optionalUser.get().getStatus() == Status.ACTIVE) {
             user.setStatus(Status.INACTIVE);
             return userRepository.save(user);
         }
@@ -56,7 +58,7 @@ public class UserService {
 
     public User activateUser(User user) {
         Optional<User> optionalUser = userRepository.findById(user.getId());
-        if(optionalUser.isPresent() && optionalUser.get().getStatus() == Status.INACTIVE) {
+        if(optionalUser.isPresent() && optionalUser.equals(user) && optionalUser.get().getStatus() == Status.INACTIVE) {
             user.setStatus(Status.ACTIVE);
             return userRepository.save(user);
         }
@@ -65,7 +67,7 @@ public class UserService {
 
     public User changeCurrency(User user) {
         Optional<User> optionalUser = userRepository.findById(user.getId());
-        if (optionalUser.isPresent() && optionalUser.get().getStatus() ==Status.ACTIVE){
+        if (optionalUser.isPresent() &&  optionalUser.equals(user) && optionalUser.get().getStatus() ==Status.ACTIVE){
             user.setCurrency(user.getCurrency());
             return userRepository.save(user);
         }
