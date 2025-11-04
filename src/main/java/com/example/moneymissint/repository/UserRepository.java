@@ -1,6 +1,7 @@
 package com.example.moneymissint.repository;
 
 import com.example.moneymissint.model.User;
+import com.example.moneymissint.roles.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
@@ -16,10 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> existsUserByEmail(String email);
 
-
-
-
-
+    boolean existsByEmail(String email);
 
 
 }

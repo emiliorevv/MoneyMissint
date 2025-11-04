@@ -1,77 +1,120 @@
-
-/**
- * Crear usuario
- * actualizar usuario
- * desactivar el usuario
- * Activar el usuario
- * Cambiar la currency
- */
-
 package com.example.moneymissint.service;
-
 import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.UserRepository;
+import com.example.moneymissint.roles.Currency;
 import com.example.moneymissint.roles.Status;
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
-import java.util.Optional;
+
 
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class UserService {
+public class
+UserService {
 
     private final UserRepository userRepository;
 
 
+    public User getUserOrThrow(Long userId){
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    }
+
     public User createUser(User user) {
-        if (StringUtils.hasText(user.getEmail()) && StringUtils.hasText(user.getPassword()) &&
-                StringUtils.hasText(user.getName())) {
-            return userRepository.save(user);
+        user.setEmail(user.getEmail().toLowerCase());
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Email already exists, please try again with a different email");
         } else {
-            return null;
-        }
-    }
-
-    public User updateUser(User user) {
-        Optional<User> optionalUser = userRepository.findById(user.getId());
-        if (optionalUser.isPresent() && optionalUser.equals(user)) {
-            user.setEmail(user.getEmail().trim().toLowerCase());
-            user.setPassword(user.getPassword());
-            user.setName(user.getName());
-            return userRepository.save(user);
-        } else {
-            return null;
-        }
-    }
-
-    public User deactivateUser(User user) {
-        Optional<User> optionalUser = userRepository.findById(user.getId());
-        if(optionalUser.isPresent() && optionalUser.equals(user)&& optionalUser.get().getStatus() == Status.ACTIVE) {
-            user.setStatus(Status.INACTIVE);
-            return userRepository.save(user);
-        }
-        return null;
-    }
-
-    public User activateUser(User user) {
-        Optional<User> optionalUser = userRepository.findById(user.getId());
-        if(optionalUser.isPresent() && optionalUser.equals(user) && optionalUser.get().getStatus() == Status.INACTIVE) {
             user.setStatus(Status.ACTIVE);
-            return userRepository.save(user);
         }
-        return null;
+        
+        return userRepository.save(user);
     }
 
-    public User changeCurrency(User user) {
-        Optional<User> optionalUser = userRepository.findById(user.getId());
-        if (optionalUser.isPresent() &&  optionalUser.equals(user) && optionalUser.get().getStatus() ==Status.ACTIVE){
-            user.setCurrency(user.getCurrency());
-            return userRepository.save(user);
+    public User updateName(Long userId, String name) {
+        User existingUser = getUserOrThrow(userId);
+
+        if (existingUser.getStatus() != Status.ACTIVE) {
+            throw new IllegalStateException("User is not active");
+        } else {
+            existingUser.setName(name);
         }
-        return null;
+
+        return userRepository.save(existingUser);
+    }
+
+    public User updatePassword(Long userId, String password) {
+        User existingUser = getUserOrThrow(userId);
+
+        if (existingUser.getStatus() != Status.ACTIVE) {
+            throw new IllegalStateException("User is not active");
+        } else {
+            existingUser.setPassword(password);
+        }
+
+        return userRepository.save(existingUser);
+    }
+
+    public User updateEmail(Long userId, String email) {
+
+        User existingUser = getUserOrThrow(userId);
+
+        if (existingUser.getStatus() != Status.ACTIVE) {
+            throw new IllegalStateException("User is not active");
+        }
+
+         String normalizedEmail = existingUser.getEmail().toLowerCase();
+
+        if (existingUser.getEmail().equalsIgnoreCase(email)) {
+            return existingUser;
+        }
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("Email already exists");
+        }else {
+            existingUser.setEmail(normalizedEmail);
+        }
+        return userRepository.save(existingUser);
+    }
+
+    public User deactivateUser(Long userId) {
+        User existingUser = getUserOrThrow(userId);
+
+        if (existingUser.getStatus() != Status.ACTIVE){
+            throw new IllegalStateException("User is already inactive");
+        }
+
+        existingUser.setStatus(Status.INACTIVE);
+
+        return userRepository.save(existingUser);
+    }
+
+    public User activateUser(Long userId) {
+        User existingUser = getUserOrThrow(userId);
+
+        if (existingUser.getStatus() != Status.INACTIVE){
+            throw new IllegalStateException("User is already active");
+        }
+
+        existingUser.setStatus(Status.ACTIVE);
+
+        return userRepository.save(existingUser);
+
+    }
+
+    public User changeCurrency(Long userId, Currency currency) {
+        User existingUser = getUserOrThrow(userId);
+
+        if (existingUser.getStatus() != Status.ACTIVE) {
+            throw new IllegalStateException("Current status is not ACTIVE");
+        }
+
+        existingUser.setCurrency(currency);
+
+        return userRepository.save(existingUser);
     }
 
 
