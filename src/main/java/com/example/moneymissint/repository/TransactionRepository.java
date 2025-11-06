@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Repository
@@ -20,4 +22,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     Page<Transaction> findByTransactionTime(LocalDateTime transactionTime, Pageable pageable);
 
+    Transaction findByTransactionAmount(BigDecimal transactionAmount);
 }
