@@ -11,9 +11,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.TransactionManagementConfigurationSelector;
-
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -35,18 +34,33 @@ public class TransactionService {
         return transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
     }
 
+    private Transaction validateUsers(Transaction transaction) {
+        if (transaction.getOriginUser() == null) {
+            throw new IllegalArgumentException("Origin User is null");
+        }
+
+        if (transaction.getOriginUser().getStatus().equals(Status.INACTIVE)) {
+            throw new IllegalStateException("Origin user status is INACTIVE");
+
+        }
+        return  transaction;
+    }
 
     public Transaction createTransaction(Transaction transaction) {
+
 
         if (transaction.getOriginUser() == null){
             throw new IllegalArgumentException("Origin User is null");
         }
-        if (transaction.getDestinationUser() == null){
-            throw new IllegalArgumentException("Destination User is null");
-        }
+
         if (transaction.getOperation() == null){
             throw new IllegalArgumentException("Operation is null");
         }
+
+        if (transaction.getDestinationUser() == null){
+            throw new IllegalArgumentException("Destination User is null");
+        }
+
 
 
         if (transaction.getTransactionAmount() == null || transaction.getTransactionAmount().compareTo(BigDecimal.ZERO) <= 0){
@@ -88,27 +102,100 @@ public class TransactionService {
         return  transactionRepository.save(transaction);
     }
 
-    /*
-    public Transaction createIncome(Long transactionId) {
-        Transaction newIncome =
 
-
-    }
-
-    public Transaction creatExpense(Long transactionId) {
-        Transaction newExpense =
-    }
-
-    public Transaction cancelIncome (Long transactionId, Operation operation) {
-        Transaction income = getTransactionOrThow(transactionId);
-
-        if (income.getOperation() != Operation.INCOME) {
-            throw new IllegalStateException("The operation is not income");
+    public Transaction createOperation(Transaction transaction) {
+        if (transaction.getOriginUser() == null){
+            throw new IllegalArgumentException("Origin User is null");
         }
 
-        return transactionRepository.delete(income);
+        if (transaction.getOperation() == null){
+            throw new IllegalArgumentException("Operation is null");
+        }
+
+        if (transaction.getTransactionAmount() == null || transaction.getTransactionAmount().compareTo(BigDecimal.ZERO) <= 0){
+
+            throw new IllegalArgumentException("Invalid transaction amount!");
+        }
+
+        User originUser = userRepository.findById
+                        (Objects.requireNonNull(transaction.getOriginUser().getId())).
+                orElseThrow(()-> new EntityNotFoundException("Origin user not found"));
+
+
+        Category category = categoryRepository.findById(Objects.requireNonNull(transaction.getCategory().getId())).
+                orElseThrow(()-> new EntityNotFoundException("Category not found"));
+
+        if (originUser.getStatus().equals(Status.INACTIVE)) {
+            throw new IllegalStateException("Origin user status is INACTIVE");
+        }
+
+        LocalDateTime dateTime = LocalDateTime.now();
+        transaction.setTransactionTime(dateTime);
+        transaction.setOriginUser(originUser);
+        transaction.setCategory(category);
+
+        return  transactionRepository.save(transaction);
+
     }
-     */
+
+
+
+    public Void  deleteOperation(Transaction transaction) {
+
+        validateUsers(transaction);
+
+        transactionRepository.delete(transaction);
+
+        return null;
+    }
+
+    public BigDecimal calculateMonthlyIncome (Transaction transaction) {
+       validateUsers(transaction);
+
+        LocalDateTime start = LocalDateTime.now();
+        LocalDateTime end = LocalDateTime.now().minusDays(30);
+
+         BigDecimal monthlyIncome = transactionRepository.findAllByTransactionTimeBetweenAndOperation_Income(start,end, Operation.INCOME).getTransactionAmount();
+
+         return monthlyIncome.setScale(2, RoundingMode.HALF_UP);
+
+
+    }
+
+
+    public BigDecimal calculateMonthlyExpenses(Transaction transaction) {
+        validateUsers(transaction);
+
+        LocalDateTime start = LocalDateTime.now();
+        LocalDateTime end = LocalDateTime.now().minusDays(30);
+
+        BigDecimal monthlyExpenses = transactionRepository.findAllByTransactionTimeBetweenAndOperation_Expense(start, end, Operation.EXPENSE).getTransactionAmount();
+
+        return monthlyExpenses.setScale(2, RoundingMode.HALF_UP);
+
+    }
+
+    public BigDecimal balance (Transaction transaction) {
+       validateUsers(transaction);
+
+        return calculateMonthlyIncome(transaction).subtract(calculateMonthlyExpenses(transaction));
+    }
+
+    public Transaction updateTransactionCategory(Transaction transaction) {
+       validateUsers(transaction);
+
+       Category category = transaction.getCategory();
+
+       if (category == null) {
+           throw new IllegalArgumentException("Category is null");
+       }
+
+       transaction.setCategory(category);
+
+       return transactionRepository.save(transaction);
+    }
+
+
 
 }
 
