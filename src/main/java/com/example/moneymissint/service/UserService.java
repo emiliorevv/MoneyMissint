@@ -3,11 +3,10 @@ import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Currency;
 import com.example.moneymissint.roles.Status;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -23,6 +22,8 @@ UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
+
+
 
     public User createUser(User user) {
         user.setEmail(user.getEmail().toLowerCase());

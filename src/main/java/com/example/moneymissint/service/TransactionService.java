@@ -8,14 +8,14 @@ import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Operation;
 import com.example.moneymissint.roles.Status;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Objects;
-
+import java.time.temporal.TemporalAdjusters;
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -30,25 +30,24 @@ public class TransactionService {
 
 
 
-    public Transaction getTransactionOrThow(Long transactionId) {
+    public Transaction getTransactionOrThrow(Long transactionId) {
         return transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
+
     }
 
-    private Transaction validateUsers(Transaction transaction) {
-        if (transaction.getOriginUser() == null) {
-            throw new IllegalArgumentException("Origin User is null");
+    public User validateUsers(Long userId) {
+
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if (user.getStatus() == Status.INACTIVE) {
+            throw new IllegalStateException("User is Inactive");
         }
 
-        if (transaction.getOriginUser().getStatus().equals(Status.INACTIVE)) {
-            throw new IllegalStateException("Origin user status is INACTIVE");
+        return user;
 
-        }
-        return  transaction;
     }
 
-    public Transaction createTransaction(Transaction transaction) {
-
-
+    public Transaction validateOperation(Transaction transaction) {
         if (transaction.getOriginUser() == null){
             throw new IllegalArgumentException("Origin User is null");
         }
@@ -57,9 +56,32 @@ public class TransactionService {
             throw new IllegalArgumentException("Operation is null");
         }
 
+        if (transaction.getCategory() == null){
+            throw new IllegalArgumentException("Category is null");
+        }
+
+        return transaction;
+    }
+
+
+
+
+    public Transaction createTransaction(Transaction transaction) {
+
+
         if (transaction.getDestinationUser() == null){
             throw new IllegalArgumentException("Destination User is null");
         }
+
+        validateOperation(transaction);
+        validateUsers(transaction.getOriginUser().getId());
+        validateUsers(transaction.getDestinationUser().getId());
+
+
+
+
+
+
 
 
 
@@ -104,13 +126,11 @@ public class TransactionService {
 
 
     public Transaction createOperation(Transaction transaction) {
-        if (transaction.getOriginUser() == null){
-            throw new IllegalArgumentException("Origin User is null");
-        }
+        validateUsers(transaction.getOriginUser().getId());
 
-        if (transaction.getOperation() == null){
-            throw new IllegalArgumentException("Operation is null");
-        }
+        validateOperation(transaction);
+
+
 
         if (transaction.getTransactionAmount() == null || transaction.getTransactionAmount().compareTo(BigDecimal.ZERO) <= 0){
 
@@ -140,22 +160,25 @@ public class TransactionService {
 
 
 
-    public Void  deleteOperation(Transaction transaction) {
-
-        validateUsers(transaction);
+    public Boolean deleteOperation(Long transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
 
         transactionRepository.delete(transaction);
-
-        return null;
+        return true;
     }
 
-    public BigDecimal calculateMonthlyIncome (Transaction transaction) {
-       validateUsers(transaction);
 
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = LocalDateTime.now().minusDays(30);
+    public BigDecimal calculateMonthlyIncome (User userId) {
+        validateUsers(userId.getId());
 
-         BigDecimal monthlyIncome = transactionRepository.findAllByTransactionTimeBetweenAndOperation_Income(start,end, Operation.INCOME).getTransactionAmount();
+        LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
+        LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
+
+         BigDecimal monthlyIncome = transactionRepository.monthlyIncome(userId,start,end, Operation.INCOME);
+
+         if (monthlyIncome == null){
+             monthlyIncome = new BigDecimal(0);
+         }
 
          return monthlyIncome.setScale(2, RoundingMode.HALF_UP);
 
@@ -163,37 +186,38 @@ public class TransactionService {
     }
 
 
-    public BigDecimal calculateMonthlyExpenses(Transaction transaction) {
-        validateUsers(transaction);
+    public BigDecimal calculateMonthlyExpenses(User userId) {
 
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = LocalDateTime.now().minusDays(30);
+        validateUsers(userId.getId());
+        LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
+        LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
 
-        BigDecimal monthlyExpenses = transactionRepository.findAllByTransactionTimeBetweenAndOperation_Expense(start, end, Operation.EXPENSE).getTransactionAmount();
+        BigDecimal monthlyExpenses = transactionRepository.monthlyExpense(userId,start, end, Operation.EXPENSE);
+
+        if (monthlyExpenses == null){
+            monthlyExpenses = new BigDecimal(0);
+        }
 
         return monthlyExpenses.setScale(2, RoundingMode.HALF_UP);
 
     }
 
-    public BigDecimal balance (Transaction transaction) {
-       validateUsers(transaction);
+    public BigDecimal balance (User userId) {
+        validateUsers(userId.getId());
 
-        return calculateMonthlyIncome(transaction).subtract(calculateMonthlyExpenses(transaction));
+        return calculateMonthlyIncome(userId).subtract(calculateMonthlyExpenses(userId));
     }
 
-    public Transaction updateTransactionCategory(Transaction transaction) {
-       validateUsers(transaction);
+    public Transaction updateTransactionCategory(Long  transactionId, Long categoryId) {
 
-       Category category = transaction.getCategory();
+        Transaction transaction = getTransactionOrThrow(transactionId);
+        Category category = categoryRepository.findById(categoryId).orElseThrow(()-> new EntityNotFoundException("Category was not found"));
 
-       if (category == null) {
-           throw new IllegalArgumentException("Category is null");
-       }
+        transaction.setCategory(category);
+        return transactionRepository.save(transaction);
 
-       transaction.setCategory(category);
-
-       return transactionRepository.save(transaction);
     }
+
 
 
 
