@@ -16,6 +16,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     Page<Category> findAllByUser(User user, Pageable pageable);
 
-    Page<Category> findAllByStatusIs(Status status, Pageable pageable);
+    Page<Category> existsByUserAndCategoryNameIgnoreCase(User user, String categoryName, Pageable pageable);
     
 }

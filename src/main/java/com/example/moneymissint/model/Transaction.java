@@ -30,7 +30,7 @@ public class Transaction {
     private LocalDateTime transactionTime;
 
     @ManyToOne (fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id" )
+    @JoinColumn(name = "category_id", nullable = true)
     private Category category;
 
     @ManyToOne (fetch = FetchType.LAZY)
