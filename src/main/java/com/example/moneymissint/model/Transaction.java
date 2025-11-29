@@ -29,7 +29,7 @@ public class Transaction {
     @Column( updatable = false)
     private LocalDateTime transactionTime;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne (optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = true)
     private Category category;
 

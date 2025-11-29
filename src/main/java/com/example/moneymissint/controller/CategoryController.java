@@ -1,7 +1,11 @@
 package com.example.moneymissint.controller;
 
-import org.springframework.stereotype.Controller;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
+@RequiredArgsConstructor
+@Validated
 public class CategoryController {
 }

@@ -3,7 +3,6 @@ import com.example.moneymissint.model.Category;
 import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.CategoryRepository;
 import com.example.moneymissint.repository.TransactionRepository;
-import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Status;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotBlank;
@@ -32,11 +31,12 @@ public class CategoryService {
         if (user.getStatus() != Status.ACTIVE){
             throw new IllegalStateException("User is inactive");
         }
-        if (categoryRepository.existsByUserIdAndCategoryNameIgnoreCase(userId, categoryName.trim())){
+        String normalizedCategoryName = categoryName.trim();
+        if (categoryRepository.existsByUserIdAndCategoryNameIgnoreCase(userId, normalizedCategoryName)){
             throw new IllegalStateException("Category already exists");
         }
         Category category = new Category();
-        category.setCategoryName(categoryName);
+        category.setCategoryName(normalizedCategoryName);
         category.setUser(user);
         return categoryRepository.save(category);
     }
@@ -66,7 +66,7 @@ public class CategoryService {
             throw new IllegalStateException("Category does not belong to user");
         }
 
-        categoryRepository.clearCategoryByCategoryId(categoryId);
+        transactionRepository.clearCategoryByCategoryId(categoryId);
         categoryRepository.delete(category);
     }
 

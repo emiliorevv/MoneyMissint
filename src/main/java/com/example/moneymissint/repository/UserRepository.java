@@ -1,7 +1,6 @@
 package com.example.moneymissint.repository;
 
 import com.example.moneymissint.model.User;
-import com.example.moneymissint.roles.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
