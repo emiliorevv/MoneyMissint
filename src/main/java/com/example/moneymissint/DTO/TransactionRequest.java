@@ -16,7 +16,10 @@ public record TransactionRequest(
         Operation operation,
 
 
-        @NotNull(message = "categoryId cannot be in blank") Long categoryId,
+        @NotNull(message = "categoryId cannot be in blank")
+        Long categoryId,
+
+
         Long destinationUserId
 ) {
 }

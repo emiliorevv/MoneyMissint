@@ -1,4 +1,6 @@
 package com.example.moneymissint.service;
+import com.example.moneymissint.DTO.TransactionRequest;
+import com.example.moneymissint.DTO.TransactionResponse;
 import com.example.moneymissint.model.Category;
 import com.example.moneymissint.model.Transaction;
 import com.example.moneymissint.model.User;
@@ -25,12 +27,11 @@ public class TransactionService {
 
     private final UserRepository userRepository;
 
-
     private final CategoryRepository categoryRepository;
 
 
 
-    public Transaction getTransactionOrThrow(Long transactionId) {
+    private Transaction getTransactionOrThrow(Long transactionId) {
         return transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
 
     }
@@ -66,99 +67,40 @@ public class TransactionService {
 
 
 
-    public Transaction createTransaction(Transaction transaction) {
+    public TransactionResponse createTransaction(TransactionRequest transactionRequest, Long originUserId) {
+        Transaction transaction = new Transaction();
+        transaction.setOperation(transactionRequest.operation());
+        transaction.setTransactionAmount(transactionRequest.amount());
+        transaction.setCategory(categoryRepository.findById(transactionRequest.categoryId()).orElseThrow(()-> new EntityNotFoundException("Category not found")));
 
 
-        if (transaction.getDestinationUser() == null){
-            throw new IllegalArgumentException("Destination User is null");
+        transaction.setOriginUser(validateUsers(originUserId));
+
+
+        if (transactionRequest.destinationUserId() != null){
+            transaction.setDestinationUser(validateUsers(transactionRequest.destinationUserId()));
+        } else {
+            transaction.setDestinationUser(null);
         }
 
-        validateOperation(transaction);
-        validateUsers(transaction.getOriginUser().getId());
-        validateUsers(transaction.getDestinationUser().getId());
-
-
-
-
-
-
-
-
-
-        if (transaction.getTransactionAmount() == null || transaction.getTransactionAmount().compareTo(BigDecimal.ZERO) <= 0){
-
-            throw new IllegalArgumentException("Invalid transaction amount!");
-        }
-
-        User originUser = userRepository.findById
-                (Objects.requireNonNull(transaction.getOriginUser().getId())).
-                orElseThrow(()-> new EntityNotFoundException("Origin user not found"));
-
-
-        User destinationUser = userRepository.findById(Objects.requireNonNull(transaction.getDestinationUser().getId())).
-                orElseThrow(() -> new EntityNotFoundException("Destination user not found"));
-
-        Category category = categoryRepository.findById(Objects.requireNonNull(transaction.getCategory().getId())).
-                orElseThrow(()-> new EntityNotFoundException("Category not found"));
-
-        if (originUser.getStatus().equals(Status.INACTIVE)) {
-            throw new IllegalStateException("Origin user status is INACTIVE");
-        }
-
-        if (destinationUser.getStatus().equals(Status.INACTIVE)) {
-            throw new IllegalStateException("Destination user status is INACTIVE");
-        }
-
-
-        if (originUser.getId().equals(destinationUser.getId())) {
+        if (transaction.getOriginUser().equals(transaction.getDestinationUser())) {
 
             throw new IllegalArgumentException("You cant make transactions to your same account!");
         }
 
+
         LocalDateTime dateTime = LocalDateTime.now();
         transaction.setTransactionTime(dateTime);
-        transaction.setOriginUser(originUser);
-        transaction.setDestinationUser(destinationUser);
-        transaction.setCategory(category);
-
-        return  transactionRepository.save(transaction);
-    }
-
-
-    public Transaction createOperation(Transaction transaction) {
-        validateUsers(transaction.getOriginUser().getId());
 
         validateOperation(transaction);
 
+        Transaction savedTransaction = transactionRepository.save(transaction);
 
-
-        if (transaction.getTransactionAmount() == null || transaction.getTransactionAmount().compareTo(BigDecimal.ZERO) <= 0){
-
-            throw new IllegalArgumentException("Invalid transaction amount!");
-        }
-
-        User originUser = userRepository.findById
-                        (Objects.requireNonNull(transaction.getOriginUser().getId())).
-                orElseThrow(()-> new EntityNotFoundException("Origin user not found"));
-
-
-        Category category = categoryRepository.findById(Objects.requireNonNull(transaction.getCategory().getId())).
-                orElseThrow(()-> new EntityNotFoundException("Category not found"));
-
-        if (originUser.getStatus().equals(Status.INACTIVE)) {
-            throw new IllegalStateException("Origin user status is INACTIVE");
-        }
-
-        LocalDateTime dateTime = LocalDateTime.now();
-        transaction.setTransactionTime(dateTime);
-        transaction.setOriginUser(originUser);
-        transaction.setCategory(category);
-
-        return  transactionRepository.save(transaction);
+        return new TransactionResponse(savedTransaction.getId(), savedTransaction.getOperation(), savedTransaction.getTransactionAmount(),
+                savedTransaction.getCategory().getId(), savedTransaction.getOriginUser().getId(),
+                (savedTransaction.getDestinationUser() != null) ? savedTransaction.getDestinationUser().getId() : null, savedTransaction.getTransactionTime());
 
     }
-
-
 
     public Boolean deleteOperation(Long transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
@@ -208,13 +150,22 @@ public class TransactionService {
         return calculateMonthlyIncome(userId).subtract(calculateMonthlyExpenses(userId));
     }
 
-    public Transaction updateTransactionCategory(Long  transactionId, Long categoryId) {
+    public TransactionResponse updateTransactionCategory(Long transactionId, Long categoryId) {
 
+        Transaction newtransaction = getTransactionOrThrow(transactionId);
+        newtransaction.setCategory(categoryRepository.findById(categoryId).orElseThrow(()-> new EntityNotFoundException("Category not found")));
+
+        Transaction transaction = transactionRepository.save(newtransaction);
+
+        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() == null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
+        //hola
+
+    }
+
+    public TransactionResponse getTransactionById(Long transactionId) {
         Transaction transaction = getTransactionOrThrow(transactionId);
-        Category category = categoryRepository.findById(categoryId).orElseThrow(()-> new EntityNotFoundException("Category was not found"));
 
-        transaction.setCategory(category);
-        return transactionRepository.save(transaction);
+        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
 
     }
 

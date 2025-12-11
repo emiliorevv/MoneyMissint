@@ -35,4 +35,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("update Transaction t set t.category = null where t.category.id = :categoryId")
     int clearCategoryByCategoryId(Long categoryId);
 
+    boolean getOrOriginUser(User originUser);
 }

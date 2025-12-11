@@ -11,7 +11,7 @@ public record TransactionResponse(
         BigDecimal amount,
         Long categoryId,
         Long originUserId,
-        LocalDateTime transactionTime,
-        Long destinationUserId
+        Long destinationUserId,
+        LocalDateTime transactionTime
 ) {
 }
