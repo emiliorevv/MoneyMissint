@@ -22,6 +22,8 @@ UserService {
     public User getUserOrThrow(Long userId){
         return userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+
     }
 
 
