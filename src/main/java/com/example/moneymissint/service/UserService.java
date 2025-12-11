@@ -1,7 +1,8 @@
 package com.example.moneymissint.service;
+import com.example.moneymissint.DTO.UserRequest;
+import com.example.moneymissint.DTO.UserResponse;
 import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.UserRepository;
-import com.example.moneymissint.roles.Currency;
 import com.example.moneymissint.roles.Status;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
@@ -25,99 +26,50 @@ UserService {
 
 
 
-    public User createUser(User user) {
-        user.setEmail(user.getEmail().toLowerCase());
+    public UserResponse createUser(UserRequest userRequest) {
+        User user = new User();
+        user.setName(userRequest.name());
+        user.setEmail(userRequest.email().toLowerCase());
+        user.setPassword(userRequest.password());
+        user.setCurrency(userRequest.currency());
+
+
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new IllegalArgumentException("Email already exists, please try again with a different email");
         } else {
             user.setStatus(Status.ACTIVE);
         }
-        
-        return userRepository.save(user);
+
+        User savedUser = userRepository.save(user);
+
+        return new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getEmail(), savedUser.getCurrency(), savedUser.getStatus());
     }
 
-    public User updateName(Long userId, String name) {
-        User existingUser = getUserOrThrow(userId);
+    public UserResponse updateUser(UserRequest userRequest, Long userId){
 
-        if (existingUser.getStatus() != Status.ACTIVE) {
-            throw new IllegalStateException("User is not active");
-        } else {
-            existingUser.setName(name);
-        }
-
-        return userRepository.save(existingUser);
-    }
-
-    public User updatePassword(Long userId, String password) {
-        User existingUser = getUserOrThrow(userId);
-
-        if (existingUser.getStatus() != Status.ACTIVE) {
-            throw new IllegalStateException("User is not active");
-        } else {
-            existingUser.setPassword(password);
-        }
-
-        return userRepository.save(existingUser);
-    }
-
-    public User updateEmail(Long userId, String email) {
-
-        User existingUser = getUserOrThrow(userId);
-
-        if (existingUser.getStatus() != Status.ACTIVE) {
-            throw new IllegalStateException("User is not active");
-        }
-
-         String normalizedEmail = existingUser.getEmail().toLowerCase();
-
-        if (existingUser.getEmail().equalsIgnoreCase(email)) {
-            return existingUser;
-        }
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new IllegalArgumentException("Email already exists");
-        }else {
-            existingUser.setEmail(normalizedEmail);
-        }
-        return userRepository.save(existingUser);
-    }
-
-    public User deactivateUser(Long userId) {
-        User existingUser = getUserOrThrow(userId);
-
-        if (existingUser.getStatus() != Status.ACTIVE){
-            throw new IllegalStateException("User is already inactive");
-        }
-
-        existingUser.setStatus(Status.INACTIVE);
-
-        return userRepository.save(existingUser);
-    }
-
-    public User activateUser(Long userId) {
-        User existingUser = getUserOrThrow(userId);
-
-        if (existingUser.getStatus() != Status.INACTIVE){
-            throw new IllegalStateException("User is already active");
-        }
-
-        existingUser.setStatus(Status.ACTIVE);
-
-        return userRepository.save(existingUser);
-
-    }
-
-    public User changeCurrency(Long userId, Currency currency) {
         User existingUser = getUserOrThrow(userId);
 
         if (existingUser.getStatus() != Status.ACTIVE) {
             throw new IllegalStateException("Current status is not ACTIVE");
         }
 
-        existingUser.setCurrency(currency);
 
-        return userRepository.save(existingUser);
+
+        existingUser.setName(userRequest.name());
+        String normalizedEmail = userRequest.email().toLowerCase();
+        if(normalizedEmail.equals(existingUser.getEmail())){
+            existingUser.setEmail(normalizedEmail);
+        } else if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("Email already exists");
+        } else {
+            existingUser.setEmail(normalizedEmail);
+        }
+        existingUser.setPassword(userRequest.password());
+        existingUser.setCurrency(userRequest.currency());
+
+        User savedUser = userRepository.save(existingUser);
+        return new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getEmail(), savedUser.getCurrency(), savedUser.getStatus());
     }
-
 
 
 }
