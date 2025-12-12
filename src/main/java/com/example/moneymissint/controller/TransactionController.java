@@ -3,6 +3,8 @@ package com.example.moneymissint.controller;
 
 import com.example.moneymissint.DTO.TransactionRequest;
 import com.example.moneymissint.DTO.TransactionResponse;
+import com.example.moneymissint.model.User;
+import com.example.moneymissint.roles.Operation;
 import com.example.moneymissint.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,37 +24,46 @@ public class TransactionController {
     private final TransactionService transactionService;
 
 
-    @PostMapping("/create/{originUserId}")
+    @PostMapping("/{originUserId}")
     public ResponseEntity<TransactionResponse> createTransaction (@RequestBody @Valid TransactionRequest transactionRequest, @PathVariable Long originUserId){
         TransactionResponse transactionResponse = transactionService.createTransaction(transactionRequest, originUserId);
         return ResponseEntity.status((HttpStatus.CREATED)).body(transactionResponse);
 
     }
 
-    @DeleteMapping("/delete/{transactionId}")
+    @DeleteMapping("/{transactionId}")
     public ResponseEntity<Void> deleteTransaction (  @PathVariable Long transactionId){
         transactionService.deleteOperation(transactionId);
-        return ResponseEntity.status((HttpStatus.NO_CONTENT)).body(null);
+        return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/monthly-income/{userId}")
-    public ResponseEntity<BigDecimal> getMonthlyIncome (@PathVariable Long userId){
-        BigDecimal monthlyIncome = transactionService.calculateMonthlyIncome(transactionService.validateUsers(userId));
-        return ResponseEntity.status(HttpStatus.OK).body(monthlyIncome);
+    @GetMapping("/monthly-stats/{userid}")
+    public ResponseEntity<BigDecimal> getMonthlyStatistics(@PathVariable Long userid, @RequestParam Operation operation){
+        User user = transactionService.validateUsers(userid);
+        return switch (operation) {
+            case INCOME -> {
+                BigDecimal monthlyIncome = transactionService.calculateMonthlyIncome(user);
+                yield ResponseEntity.status(HttpStatus.OK).body(monthlyIncome);
+            }
+            case EXPENSE -> {
+                BigDecimal monthlyExpenses = transactionService.calculateMonthlyExpenses(user);
+                yield ResponseEntity.status(HttpStatus.OK).body(monthlyExpenses);
+            }
 
+            case TRANSFER -> {
+                BigDecimal monthlyTransfer = transactionService.calculateMonthlyTransfers(user);
+                yield ResponseEntity.status(HttpStatus.OK).body(monthlyTransfer);
+            }
+        };
     }
 
-    @GetMapping("/monthly-expenses/{userId}")
-    public ResponseEntity<BigDecimal> getMonthlyExpenses (@PathVariable Long userId) {
-        BigDecimal monthlyExpenses = transactionService.calculateMonthlyExpenses(transactionService.validateUsers(userId));
-        return ResponseEntity.status(HttpStatus.OK).body(monthlyExpenses);
-    }
-
-    @GetMapping("/balance/{userId}")
-    public ResponseEntity<BigDecimal> getBalance (@PathVariable Long userId) {
-        BigDecimal balance = transactionService.balance(transactionService.validateUsers(userId));
+    @GetMapping("/balance/{userid}")
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long userid){
+        BigDecimal balance = transactionService.balance(transactionService.validateUsers(userid));
         return ResponseEntity.status(HttpStatus.OK).body(balance);
     }
+
+
 
     @PutMapping("/update-category/{transactionId}/{categoryId}")
     public ResponseEntity<TransactionResponse> updateTransactionCategory(@PathVariable Long transactionId, @PathVariable Long categoryId){
@@ -65,5 +76,7 @@ public class TransactionController {
         TransactionResponse transactionResponse = transactionService.getTransactionById(transactionId);
         return ResponseEntity.status(HttpStatus.OK).body(transactionResponse);
     }
+
+
 
 }

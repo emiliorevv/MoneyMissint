@@ -33,6 +33,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT SUM(t.transactionAmount) FROM Transaction t WHERE t.originUser = :originUser AND t.transactionTime BETWEEN :start AND :end AND t.operation = :operation")
     BigDecimal monthlyIncome(User originUser, LocalDateTime start, LocalDateTime end, Operation operation);
 
+    @Query("SELECT SUM(t.transactionAmount) FROM Transaction t WHERE t.originUser = :originUser AND t.transactionTime BETWEEN :start AND :end AND t.operation = :operation")
+    BigDecimal monthlyTransfer(User originUser, LocalDateTime start, LocalDateTime end, Operation operation);
+
+
     @Modifying
     @Query("update Transaction t set t.category = null where t.category.id = :categoryId")
     int clearCategoryByCategoryId(Long categoryId);

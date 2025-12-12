@@ -5,6 +5,8 @@ import com.example.moneymissint.DTO.CategoryResponse;
 import com.example.moneymissint.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +36,16 @@ public class CategoryController {
     @DeleteMapping("/{categoryId}/{userId}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long categoryId, @PathVariable Long userId) {
         categoryService.deleteCategory(userId, categoryId);
-        return ResponseEntity.status((HttpStatus.NO_CONTENT)).body(null);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<Page<CategoryResponse>> getAllCategories( @PathVariable Long userId, Pageable pageable){
+        Page <CategoryResponse> categories = categoryService.getAllCategories(userId, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(categories);
     }
 }
+
+
+//Incompatible types. Found: 'org.springframework.http.ResponseEntity<org.springframework.data.domain.Page<com.example.moneymissint.DTO.CategoryResponse>>', required:
+//                           'org.springframework.data.domain.Page<org.springframework.http.ResponseEntity<com.example.moneymissint.DTO.CategoryResponse>>'

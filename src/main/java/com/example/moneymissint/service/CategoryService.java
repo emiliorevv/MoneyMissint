@@ -7,11 +7,15 @@ import com.example.moneymissint.repository.CategoryRepository;
 import com.example.moneymissint.repository.TransactionRepository;
 import com.example.moneymissint.roles.Status;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -77,9 +81,18 @@ public class CategoryService {
 
         }
 
+        public Page<CategoryResponse> getAllCategories (Long userId, Pageable pageable){
+            User user = userService.getUserOrThrow(userId);
+
+            Page<Category> categories = categoryRepository.findAllByUser(user, pageable);
+
+            return categories.map(category -> new CategoryResponse(category.getId(), category.getCategoryName()));
+
+        }
 
 
-    public void  deleteCategory(Long userId, Long categoryId){
+
+    public void deleteCategory(Long userId, Long categoryId){
         Category category = getCategoryOrThrow(categoryId);
 
         if (userService.getUserOrThrow(userId).getStatus() != Status.ACTIVE){

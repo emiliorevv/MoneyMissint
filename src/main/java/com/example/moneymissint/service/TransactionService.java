@@ -1,7 +1,6 @@
 package com.example.moneymissint.service;
 import com.example.moneymissint.DTO.TransactionRequest;
 import com.example.moneymissint.DTO.TransactionResponse;
-import com.example.moneymissint.model.Category;
 import com.example.moneymissint.model.Transaction;
 import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.CategoryRepository;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.time.temporal.TemporalAdjusters;
 @Service
 @RequiredArgsConstructor
@@ -48,7 +46,7 @@ public class TransactionService {
 
     }
 
-    public Transaction validateOperation(Transaction transaction) {
+    public void validateOperation(Transaction transaction) {
         if (transaction.getOriginUser() == null){
             throw new IllegalArgumentException("Origin User is null");
         }
@@ -61,7 +59,6 @@ public class TransactionService {
             throw new IllegalArgumentException("Category is null");
         }
 
-        return transaction;
     }
 
 
@@ -102,16 +99,15 @@ public class TransactionService {
 
     }
 
-    public Boolean deleteOperation(Long transactionId) {
+    public void deleteOperation(Long transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
 
         transactionRepository.delete(transaction);
-        return true;
     }
 
 
     public BigDecimal calculateMonthlyIncome (User userId) {
-        validateUsers(userId.getId());
+
 
         LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
         LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
@@ -128,13 +124,13 @@ public class TransactionService {
     }
 
 
-    public BigDecimal calculateMonthlyExpenses(User userId) {
+    public BigDecimal calculateMonthlyExpenses(User user) {
 
-        validateUsers(userId.getId());
+
         LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
         LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
 
-        BigDecimal monthlyExpenses = transactionRepository.monthlyExpense(userId,start, end, Operation.EXPENSE);
+        BigDecimal monthlyExpenses = transactionRepository.monthlyExpense(user,start, end, Operation.EXPENSE);
 
         if (monthlyExpenses == null){
             monthlyExpenses = new BigDecimal(0);
@@ -144,10 +140,22 @@ public class TransactionService {
 
     }
 
-    public BigDecimal balance (User userId) {
-        validateUsers(userId.getId());
+    public BigDecimal calculateMonthlyTransfers(User user){
+        LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
+        LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
 
-        return calculateMonthlyIncome(userId).subtract(calculateMonthlyExpenses(userId));
+        BigDecimal monthlyTransfer = transactionRepository.monthlyTransfer(user, start, end, Operation.TRANSFER);
+
+        if (monthlyTransfer == null){
+            monthlyTransfer = new BigDecimal(0);
+        }
+
+        return monthlyTransfer.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal balance (User user) {
+
+        return calculateMonthlyIncome(user).subtract(calculateMonthlyExpenses(user));
     }
 
     public TransactionResponse updateTransactionCategory(Long transactionId, Long categoryId) {
@@ -157,7 +165,7 @@ public class TransactionService {
 
         Transaction transaction = transactionRepository.save(newtransaction);
 
-        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() == null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
+        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
         //hola
 
     }
