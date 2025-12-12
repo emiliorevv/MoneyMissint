@@ -5,6 +5,7 @@ import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Status;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,8 @@ public class
 UserService {
 
     private final UserRepository userRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
 
     public User getUserOrThrow(Long userId){
@@ -32,7 +35,8 @@ UserService {
         User user = new User();
         user.setName(userRequest.name());
         user.setEmail(userRequest.email().toLowerCase());
-        user.setPassword(userRequest.password());
+        String encodedPassword = passwordEncoder.encode(userRequest.password());
+        user.setPassword(encodedPassword);
         user.setCurrency(userRequest.currency());
 
 
@@ -66,7 +70,9 @@ UserService {
         } else {
             existingUser.setEmail(normalizedEmail);
         }
-        existingUser.setPassword(userRequest.password());
+
+        String encodedPassword = passwordEncoder.encode(userRequest.password());
+        existingUser.setPassword(encodedPassword);
         existingUser.setCurrency(userRequest.currency());
 
         User savedUser = userRepository.save(existingUser);
