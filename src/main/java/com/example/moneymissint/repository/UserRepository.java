@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 
@@ -17,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> existsUserByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    Optional<User> findByEmail(String email);
 
 
 }
