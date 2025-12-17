@@ -36,6 +36,11 @@ public class UserService implements UserDetailsService {
 
     }
 
+    public UserResponse getUserById(Long userId){
+        User user = getUserOrThrow(userId);
+        return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getCurrency(), user.getStatus());
+    }
+
 
 
     public UserResponse createUser(UserRequest userRequest) {

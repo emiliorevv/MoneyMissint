@@ -5,10 +5,12 @@ import com.example.moneymissint.DTO.UserRequest;
 import com.example.moneymissint.DTO.UserResponse;
 import com.example.moneymissint.service.AuthService;
 import com.example.moneymissint.service.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +26,7 @@ public class UserController {
     private final AuthService AuthService;
 
     @PostMapping
+    @SecurityRequirements()
     public ResponseEntity<UserResponse> createUser(@RequestBody @Valid UserRequest userRequest){
         UserResponse userResponse = userService.createUser(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
@@ -37,7 +40,14 @@ public class UserController {
 
     }
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId){
+        UserResponse userResponse = userService.getUserById(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(userResponse);
+    }
+
     @PostMapping("/login")
+    @SecurityRequirements()
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest authRequest){
         AuthResponse authResponse = AuthService.login(authRequest);
         return ResponseEntity.status(HttpStatus.OK).body(authResponse);
