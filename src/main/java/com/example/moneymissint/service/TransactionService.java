@@ -71,8 +71,7 @@ public class TransactionService {
 
     public TransactionResponse createTransaction(TransactionRequest transactionRequest) {
 
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User originUser = (User) principal;
+        User originUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Transaction transaction = new Transaction();
         transaction.setOperation(transactionRequest.operation());
@@ -114,8 +113,8 @@ public class TransactionService {
 
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
 
-        if (!originUser.getId().equals(getTransactionOrThrow(transactionId).getOriginUser().getId())){
-            throw new IllegalStateException("You are not the owner of this transaction");
+        if (!transaction.getOriginUser().getId().equals(originUser.getId())){
+            throw new EntityNotFoundException("Transaction not found");
         }
 
         transactionRepository.delete(transaction);
@@ -176,25 +175,27 @@ public class TransactionService {
     }
 
     public BigDecimal balance () {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        return calculateMonthlyIncome().subtract(calculateMonthlyExpenses());
+        return calculateMonthlyIncome().add(calculateMonthlyTransfers()).subtract(calculateMonthlyExpenses());
     }
 
     public TransactionResponse updateTransactionCategory(Long transactionId, Long categoryId) {
 
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!user.getId().equals(getTransactionOrThrow(transactionId).getOriginUser().getId())){
-            throw new IllegalStateException("You are not the owner of this transaction");
-        }
-
-        Category category = (Category) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!category.getId().equals(categoryId)){
-            throw new IllegalStateException("You are not the owner of this category");
-        }
-
+        Category category = categoryRepository.findById(categoryId).orElseThrow(()-> new EntityNotFoundException("Category not found"));
         Transaction newtransaction = getTransactionOrThrow(transactionId);
-        newtransaction.setCategory(categoryRepository.findById(categoryId).orElseThrow(()-> new EntityNotFoundException("Category not found")));
+
+
+        if (!user.getId().equals(newtransaction.getOriginUser().getId())){
+            throw new EntityNotFoundException("The transaction was not found");
+        }
+
+        if (!category.getId().equals(categoryId)){
+            throw new EntityNotFoundException("The category was not found");
+        }
+
+
+        newtransaction.setCategory(category);
 
         Transaction transaction = transactionRepository.save(newtransaction);
 
@@ -206,11 +207,12 @@ public class TransactionService {
 
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if (!user.getId().equals(getTransactionOrThrow(transactionId).getOriginUser().getId())){
+        Transaction transaction = getTransactionOrThrow(transactionId);
+        if (!user.getId().equals(transaction.getOriginUser().getId())){
             throw new IllegalStateException("You are not the owner of this transaction");
         }
 
-        Transaction transaction = getTransactionOrThrow(transactionId);
+
 
         return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
 

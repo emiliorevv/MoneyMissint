@@ -37,7 +37,7 @@ public class CategoryService {
 
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if (userService.getUserOrThrow(user.getId()).getStatus() != Status.ACTIVE){
+        if (user.getStatus() != Status.ACTIVE){
             throw new IllegalStateException("User is inactive");
         }
 
@@ -62,15 +62,17 @@ public class CategoryService {
 
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if (userService.getUserOrThrow(user.getId()).getStatus() != Status.ACTIVE){
+        Category category = getCategoryOrThrow(categoryId);
+
+        if (user.getStatus() != Status.ACTIVE){
             throw new IllegalStateException("User is inactive");
         }
 
-        if (!user.getId().equals(categoryId)){
-            throw new IllegalStateException("You are not the owner of this category");
-        }
+       if (!user.getId().equals(category.getUser().getId())){
+           throw new EntityNotFoundException("Category not found");
+       }
 
-        Category category = getCategoryOrThrow(categoryId);
+
 
         String normalizedCategoryName = categoryRequest.nameOfCategory().trim();
         if (categoryRepository.existsByUserIdAndCategoryNameIgnoreCaseAndIdNot(user.getId(), normalizedCategoryName, categoryId)){
@@ -87,7 +89,7 @@ public class CategoryService {
 
         public Page<CategoryResponse> getAllCategories (Pageable pageable){
             User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            if (userService.getUserOrThrow(user.getId()).getStatus() != Status.ACTIVE){
+            if (user.getStatus() != Status.ACTIVE){
                 throw new IllegalStateException("User is inactive");
             }
 
@@ -104,8 +106,12 @@ public class CategoryService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Category category = getCategoryOrThrow(categoryId);
 
-        if (userService.getUserOrThrow(user.getId()).getStatus() != Status.ACTIVE){
+        if (user.getStatus() != Status.ACTIVE){
             throw new IllegalStateException("User is inactive");
+        }
+
+        if (!user.getId().equals(category.getUser().getId())){
+            throw new IllegalStateException("You are not the owner of this category");
         }
 
         transactionRepository.clearCategoryByCategoryId(categoryId);
