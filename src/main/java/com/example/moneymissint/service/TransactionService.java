@@ -1,6 +1,7 @@
 package com.example.moneymissint.service;
 import com.example.moneymissint.DTO.TransactionRequest;
 import com.example.moneymissint.DTO.TransactionResponse;
+import com.example.moneymissint.model.Category;
 import com.example.moneymissint.model.Transaction;
 import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.CategoryRepository;
@@ -8,8 +9,10 @@ import com.example.moneymissint.repository.TransactionRepository;
 import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Operation;
 import com.example.moneymissint.roles.Status;
+import com.example.moneymissint.security.JwtService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -26,6 +29,8 @@ public class TransactionService {
     private final UserRepository userRepository;
 
     private final CategoryRepository categoryRepository;
+
+    private final JwtService jwtService;
 
 
 
@@ -64,14 +69,18 @@ public class TransactionService {
 
 
 
-    public TransactionResponse createTransaction(TransactionRequest transactionRequest, Long originUserId) {
+    public TransactionResponse createTransaction(TransactionRequest transactionRequest) {
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User originUser = (User) principal;
+
         Transaction transaction = new Transaction();
         transaction.setOperation(transactionRequest.operation());
         transaction.setTransactionAmount(transactionRequest.amount());
         transaction.setCategory(categoryRepository.findById(transactionRequest.categoryId()).orElseThrow(()-> new EntityNotFoundException("Category not found")));
 
 
-        transaction.setOriginUser(validateUsers(originUserId));
+        transaction.setOriginUser(originUser);
 
 
         if (transactionRequest.destinationUserId() != null){
@@ -100,19 +109,28 @@ public class TransactionService {
     }
 
     public void deleteOperation(Long transactionId) {
+
+        User originUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
+
+        if (!originUser.getId().equals(getTransactionOrThrow(transactionId).getOriginUser().getId())){
+            throw new IllegalStateException("You are not the owner of this transaction");
+        }
 
         transactionRepository.delete(transaction);
     }
 
 
-    public BigDecimal calculateMonthlyIncome (User userId) {
+    public BigDecimal calculateMonthlyIncome() {
+
+        User originUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
 
         LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
         LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
 
-         BigDecimal monthlyIncome = transactionRepository.monthlyIncome(userId,start,end, Operation.INCOME);
+         BigDecimal monthlyIncome = transactionRepository.monthlyIncome(originUser,start,end, Operation.INCOME);
 
          if (monthlyIncome == null){
              monthlyIncome = new BigDecimal(0);
@@ -124,8 +142,9 @@ public class TransactionService {
     }
 
 
-    public BigDecimal calculateMonthlyExpenses(User user) {
+    public BigDecimal calculateMonthlyExpenses() {
 
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
         LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
@@ -140,7 +159,10 @@ public class TransactionService {
 
     }
 
-    public BigDecimal calculateMonthlyTransfers(User user){
+    public BigDecimal calculateMonthlyTransfers(){
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
         LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
 
@@ -153,12 +175,23 @@ public class TransactionService {
         return monthlyTransfer.setScale(2, RoundingMode.HALF_UP);
     }
 
-    public BigDecimal balance (User user) {
+    public BigDecimal balance () {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        return calculateMonthlyIncome(user).subtract(calculateMonthlyExpenses(user));
+        return calculateMonthlyIncome().subtract(calculateMonthlyExpenses());
     }
 
     public TransactionResponse updateTransactionCategory(Long transactionId, Long categoryId) {
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!user.getId().equals(getTransactionOrThrow(transactionId).getOriginUser().getId())){
+            throw new IllegalStateException("You are not the owner of this transaction");
+        }
+
+        Category category = (Category) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!category.getId().equals(categoryId)){
+            throw new IllegalStateException("You are not the owner of this category");
+        }
 
         Transaction newtransaction = getTransactionOrThrow(transactionId);
         newtransaction.setCategory(categoryRepository.findById(categoryId).orElseThrow(()-> new EntityNotFoundException("Category not found")));
@@ -166,11 +199,17 @@ public class TransactionService {
         Transaction transaction = transactionRepository.save(newtransaction);
 
         return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
-        //hola
 
     }
 
     public TransactionResponse getTransactionById(Long transactionId) {
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.getId().equals(getTransactionOrThrow(transactionId).getOriginUser().getId())){
+            throw new IllegalStateException("You are not the owner of this transaction");
+        }
+
         Transaction transaction = getTransactionOrThrow(transactionId);
 
         return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());

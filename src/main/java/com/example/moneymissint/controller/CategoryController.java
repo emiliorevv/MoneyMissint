@@ -21,31 +21,27 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @PostMapping({"/{userId}"})
-    public ResponseEntity<CategoryResponse> createCategory(@PathVariable Long userId, @RequestBody @Valid CategoryRequest categoryRequest){
-        CategoryResponse categoryResponse = categoryService.createCategory(userId, categoryRequest);
+    @PostMapping({""})
+    public ResponseEntity<CategoryResponse> createCategory( @RequestBody @Valid CategoryRequest categoryRequest){
+        CategoryResponse categoryResponse = categoryService.createCategory(categoryRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryResponse);
     }
 
-    @PutMapping("/{categoryId}/{userId}")
-    public ResponseEntity<CategoryResponse> renameCategory(@PathVariable Long categoryId, @PathVariable Long userId, @RequestBody @Valid CategoryRequest categoryRequest){
-        CategoryResponse categoryResponse = categoryService.renameCategory(categoryId, categoryRequest, userId);
+    @PutMapping("/{categoryId}")
+    public ResponseEntity<CategoryResponse> renameCategory(@PathVariable Long categoryId, @RequestBody @Valid CategoryRequest categoryRequest){
+        CategoryResponse categoryResponse = categoryService.renameCategory(categoryId, categoryRequest);
         return ResponseEntity.status(HttpStatus.OK).body(categoryResponse);
     }
 
-    @DeleteMapping("/{categoryId}/{userId}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long categoryId, @PathVariable Long userId) {
-        categoryService.deleteCategory(userId, categoryId);
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long categoryId) {
+        categoryService.deleteCategory (categoryId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<Page<CategoryResponse>> getAllCategories( @PathVariable Long userId, Pageable pageable){
-        Page <CategoryResponse> categories = categoryService.getAllCategories(userId, pageable);
+    @GetMapping
+    public ResponseEntity<Page<CategoryResponse>> getAllCategories(Pageable pageable){
+        Page <CategoryResponse> categories = categoryService.getAllCategories(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(categories);
     }
 }
-
-
-//Incompatible types. Found: 'org.springframework.http.ResponseEntity<org.springframework.data.domain.Page<com.example.moneymissint.DTO.CategoryResponse>>', required:
-//                           'org.springframework.data.domain.Page<org.springframework.http.ResponseEntity<com.example.moneymissint.DTO.CategoryResponse>>'

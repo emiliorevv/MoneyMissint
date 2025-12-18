@@ -5,6 +5,7 @@ import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Status;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -63,15 +64,13 @@ public class UserService implements UserDetailsService {
         return new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getEmail(), savedUser.getCurrency(), savedUser.getStatus());
     }
 
-    public UserResponse updateUser(UserRequest userRequest, Long userId){
+    public UserResponse updateUser(UserRequest userRequest){
 
-        User existingUser = getUserOrThrow(userId);
+        User existingUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (existingUser.getStatus() != Status.ACTIVE) {
             throw new IllegalStateException("Current status is not ACTIVE");
         }
-
-
 
         existingUser.setName(userRequest.name());
         String normalizedEmail = userRequest.email().toLowerCase();

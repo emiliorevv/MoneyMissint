@@ -24,9 +24,9 @@ public class TransactionController {
     private final TransactionService transactionService;
 
 
-    @PostMapping("/{originUserId}")
-    public ResponseEntity<TransactionResponse> createTransaction (@RequestBody @Valid TransactionRequest transactionRequest, @PathVariable Long originUserId){
-        TransactionResponse transactionResponse = transactionService.createTransaction(transactionRequest, originUserId);
+    @PostMapping
+    public ResponseEntity<TransactionResponse> createTransaction (@RequestBody @Valid TransactionRequest transactionRequest){
+        TransactionResponse transactionResponse = transactionService.createTransaction(transactionRequest);
         return ResponseEntity.status((HttpStatus.CREATED)).body(transactionResponse);
 
     }
@@ -37,29 +37,29 @@ public class TransactionController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/monthly-stats/{userid}")
-    public ResponseEntity<BigDecimal> getMonthlyStatistics(@PathVariable Long userid, @RequestParam Operation operation){
-        User user = transactionService.validateUsers(userid);
+    @GetMapping("/monthly-stats")
+    public ResponseEntity<BigDecimal> getMonthlyStatistics(@RequestParam Operation operation){
+
         return switch (operation) {
             case INCOME -> {
-                BigDecimal monthlyIncome = transactionService.calculateMonthlyIncome(user);
+                BigDecimal monthlyIncome = transactionService.calculateMonthlyIncome();
                 yield ResponseEntity.status(HttpStatus.OK).body(monthlyIncome);
             }
             case EXPENSE -> {
-                BigDecimal monthlyExpenses = transactionService.calculateMonthlyExpenses(user);
+                BigDecimal monthlyExpenses = transactionService.calculateMonthlyExpenses();
                 yield ResponseEntity.status(HttpStatus.OK).body(monthlyExpenses);
             }
 
             case TRANSFER -> {
-                BigDecimal monthlyTransfer = transactionService.calculateMonthlyTransfers(user);
+                BigDecimal monthlyTransfer = transactionService.calculateMonthlyTransfers();
                 yield ResponseEntity.status(HttpStatus.OK).body(monthlyTransfer);
             }
         };
     }
 
-    @GetMapping("/balance/{userid}")
-    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long userid){
-        BigDecimal balance = transactionService.balance(transactionService.validateUsers(userid));
+    @GetMapping("/balance}")
+    public ResponseEntity<BigDecimal> getBalance(){
+        BigDecimal balance = transactionService.balance();
         return ResponseEntity.status(HttpStatus.OK).body(balance);
     }
 
