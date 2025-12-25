@@ -74,8 +74,11 @@ public class UserService implements UserDetailsService {
 
         existingUser.setName(userRequest.name());
         String normalizedEmail = userRequest.email().toLowerCase();
+
+
         if(normalizedEmail.equals(existingUser.getEmail())){
             existingUser.setEmail(normalizedEmail);
+
         } else if (userRepository.existsByEmail(normalizedEmail)) {
             throw new IllegalArgumentException("Email already exists");
         } else {
