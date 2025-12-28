@@ -6,8 +6,10 @@ import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Currency;
 import com.example.moneymissint.roles.Status;
+import com.example.moneymissint.utils.SecurityUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,9 +18,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.mockito.Mockito.*;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,54 +48,54 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    final static String name = "Emilio";
-    final static String email = "emilio@gmail.com";
-    final static String password = "emiliorevueltas";
-    final static Currency currency = Currency.EUR;
-    final static Status status = Status.ACTIVE;
+    private User user;
+
+
+    @BeforeEach
+    void setUp() {
+        this.user = SecurityUtils.mockedLoginUser(Status.ACTIVE, securityContext, authentication);
+    }
 
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
     }
 
-    private void mockedLoginUser(Status status){
-        User user = new User();
-        user.setId(1L);
-        user.setEmail(email);
-        user.setStatus(status);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(user);
-        SecurityContextHolder.setContext(securityContext);
-    }
-
-
     @Test
     @DisplayName("Create User Test, it should create user without problems")
     void createUser_Success() {
 
-        UserRequest userRequest = new UserRequest(name, email, password, currency, status);
+        UserRequest userRequest = new UserRequest("Emilio","emilio@gmail.com", "123456", Currency.EUR, Status.ACTIVE);
 
         when(passwordEncoder.encode(userRequest.password())).thenReturn("encodedPassword");
 
-        User savedUser = new User();
-        savedUser.setId(1L);
-        savedUser.setName("Emilio");
-        savedUser.setEmail("emilio@gmail.com");
-        savedUser.setCurrency(Currency.EUR);
-        savedUser.setStatus(Status.ACTIVE);
+        User userRequestSaved = new User();
+        userRequestSaved.setId(1L);
+        userRequestSaved.setName(userRequest.name());
+        userRequestSaved.setEmail(userRequest.email().toLowerCase());
+        userRequestSaved.setPassword("encodedPassword");
+        userRequestSaved.setCurrency(userRequest.currency());
+        userRequestSaved.setStatus(Status.ACTIVE);
 
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.existsByEmail(userRequestSaved.getEmail().toLowerCase())).thenReturn(false);
 
+        when(userRepository.save(any(User.class))).thenReturn(userRequestSaved);
 
-        when(userRepository.existsByEmail(email)).thenReturn(false);
 
         UserResponse userResponse = userService.createUser(userRequest);
 
         assertThat(userResponse).isNotNull();
         assertThat(userResponse.userId()).isEqualTo(1L);
+        assertThat(userResponse.name()).isEqualTo(userRequest.name());
+        assertThat(userResponse.email()).isEqualTo(userRequest.email());
+        assertThat(userResponse.currency()).isEqualTo(userRequest.currency());
+        assertThat(userResponse.status()).isEqualTo(userRequest.status());
+
+
 
         verify(userRepository, times(1)).save(any(User.class));
+
+        verify(passwordEncoder, times(1)).encode("123456");
 
 
     }
@@ -100,9 +104,17 @@ public class UserServiceTest {
     @DisplayName("Create User Test, test should throw exception because email is duplicated")
     void createUser_ThrowException_EmailDuplicated() {
 
-        UserRequest userRequest = new UserRequest(name, email, password, currency, status);
+        UserRequest userRequest = new UserRequest("Emilio", "emilio@gmail.com", "123456", Currency.EUR, Status.ACTIVE);
 
-        when(userRepository.existsByEmail(email)).thenReturn(true);
+        User userRequestSaved = new User();
+        userRequestSaved.setId(1L);
+        userRequestSaved.setName(userRequest.name());
+        userRequestSaved.setEmail(userRequest.email().toLowerCase());
+        userRequestSaved.setPassword("encodedPassword");
+        userRequestSaved.setCurrency(userRequest.currency());
+        userRequestSaved.setStatus(Status.ACTIVE);
+
+        when(userRepository.existsByEmail(userRequestSaved.getEmail())).thenReturn(true);
 
         assertThatThrownBy(() -> userService.createUser(userRequest)).isInstanceOf(IllegalArgumentException.class).hasMessage("Email already exists, please try again with a different email");
 
@@ -114,27 +126,30 @@ public class UserServiceTest {
     @Test
     @DisplayName("Get User by Id, test should return User")
     void getUserById_Success() {
+
+
         User user = new User();
-        Long userId = 1L;
-        user.setId(userId);
+        user.setId(1L);
         user.setName("Emilio");
-        user.setEmail("emilio.rev@gmail.com");
+        user.setEmail("emilio@gmail.com");
+        user.setPassword("encodedPassword");
         user.setCurrency(Currency.EUR);
         user.setStatus(Status.ACTIVE);
 
-        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+        Long userId = 1L;
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         UserResponse userResponse = userService.getUserById(userId);
 
         assertThat(userResponse).isNotNull();
         assertThat(userResponse.userId()).isEqualTo(userId);
-        assertThat(userResponse.name()).isEqualTo(user.getName());
-        assertThat(userResponse.email()).isEqualTo(user.getEmail());
-        assertThat(userResponse.currency()).isEqualTo(user.getCurrency());
-        assertThat(userResponse.status()).isEqualTo(user.getStatus());
+        assertThat(userResponse.name()).isEqualTo("Emilio");
+        assertThat(userResponse.email()).isEqualTo("emilio@gmail.com");
+        assertThat(userResponse.currency()).isEqualTo(Currency.EUR);
+        assertThat(userResponse.status()).isEqualTo(Status.ACTIVE);
 
         verify(userRepository, times(1)).findById(userId);
-
 
     }
 
@@ -155,33 +170,43 @@ public class UserServiceTest {
     @DisplayName("Update user, user should be updated correctly")
     void updateUser_Success(){
 
-         mockedLoginUser(Status.ACTIVE);
+        user.setName("original");
+        user.setEmail("original@gmail.com");
 
-        UserRequest updateRequest = new UserRequest(name, email, password, currency, status);
+
+        UserRequest updateRequest = new UserRequest("actualizado", "actualizado@gmail.com", "123456", Currency.EUR, Status.ACTIVE);
+
+
 
         when(passwordEncoder.encode(updateRequest.password())).thenReturn("encodedPassword");
+
+        when(userRepository.existsByEmail(updateRequest.email().toLowerCase())).thenReturn(false);
+
+
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         UserResponse updatedUser = userService.updateUser(updateRequest);
 
-        assertThat(updatedUser).isNotNull();
-        assertThat(updatedUser.name()).isEqualTo(name);
-        assertThat(updatedUser.email()).isEqualTo(email);
-        assertThat(updatedUser.currency()).isEqualTo(currency);
-        assertThat(updatedUser.status()).isEqualTo(status);
+        assertThat(updatedUser.userId()).isEqualTo(user.getId());
 
-        verify(userRepository, times(1)).save(any(User.class));
+        assertThat(updatedUser).isNotNull();
+        assertThat(updatedUser.name()).isEqualTo("actualizado");
+        assertThat(updatedUser.email()).isEqualTo("actualizado@gmail.com");
+        assertThat(updatedUser.currency()).isEqualTo(Currency.EUR);
+        assertThat(updatedUser.status()).isEqualTo(Status.ACTIVE);
+
+        verify(userRepository, times(1)).save(user);
 
     }
-
 
 
     @Test
     @DisplayName("Update User, user is not active")
     void updateUser_ThrowException_UserNotActive(){
-        mockedLoginUser(Status.INACTIVE);
 
-        assertThatThrownBy(() -> userService.updateUser(new UserRequest(name, email, password, currency, status))).isInstanceOf(IllegalStateException.class).hasMessage("Current status is not ACTIVE");
+        user.setStatus(Status.INACTIVE);
+
+        assertThatThrownBy(() -> userService.updateUser(new UserRequest("updated", "updated@gmail.com", "123456", Currency.EUR, Status.INACTIVE))).isInstanceOf(IllegalStateException.class).hasMessage("Current status is not ACTIVE");
 
         verify(userRepository, never()).save(any(User.class));
 
@@ -190,13 +215,18 @@ public class UserServiceTest {
     @Test
     @DisplayName("Update User, user cannot be updated because email is already in use")
     void updateUser_ThrowException_EmailAlreadyInUse(){
-        mockedLoginUser(Status.ACTIVE);
 
-        String newEmail = "occupied@test.com";
+        String originalEmail = "original@gmail.com";
+        user.setEmail(originalEmail);
 
-        when(userRepository.existsByEmail(newEmail)).thenReturn(true);
+        String occupiedEmail = "occupied@gmail.com";
 
-        assertThatThrownBy(() -> userService.updateUser(new UserRequest(name, newEmail, password, currency, status))).isInstanceOf(IllegalArgumentException.class).hasMessage("Email already exists");
+
+        UserRequest updateRequest = new UserRequest("emilio", occupiedEmail, "123456", Currency.EUR, Status.ACTIVE);
+
+        when(userRepository.existsByEmail(updateRequest.email().toLowerCase())).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.updateUser(updateRequest)).isInstanceOf(IllegalArgumentException.class).hasMessage("Email already exists");
         verify(userRepository, never()).save(any(User.class));
     }
 

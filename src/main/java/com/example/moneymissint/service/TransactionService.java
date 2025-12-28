@@ -9,7 +9,6 @@ import com.example.moneymissint.repository.TransactionRepository;
 import com.example.moneymissint.repository.UserRepository;
 import com.example.moneymissint.roles.Operation;
 import com.example.moneymissint.roles.Status;
-import com.example.moneymissint.security.JwtService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,9 +28,6 @@ public class TransactionService {
     private final UserRepository userRepository;
 
     private final CategoryRepository categoryRepository;
-
-    private final JwtService jwtService;
-
 
 
     private Transaction getTransactionOrThrow(Long transactionId) {
@@ -174,9 +170,26 @@ public class TransactionService {
         return monthlyTransfer.setScale(2, RoundingMode.HALF_UP);
     }
 
-    public BigDecimal balance () {
+    public BigDecimal calculateMonthlyTransfersRecieved(){
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        return calculateMonthlyIncome().add(calculateMonthlyTransfers()).subtract(calculateMonthlyExpenses());
+        LocalDateTime start = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth());
+        LocalDateTime end = LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth());
+
+        BigDecimal monthlyTransfer = transactionRepository.monthlyTransferReceived(user, start, end, Operation.TRANSFER);
+
+        if (monthlyTransfer == null){
+            monthlyTransfer = new BigDecimal(0);
+        }
+
+
+        return monthlyTransfer.setScale(2, RoundingMode.HALF_UP);
+    }
+
+
+    public BigDecimal balanceOfTheMonth() {
+
+        return calculateMonthlyIncome().add(calculateMonthlyTransfersRecieved()).subtract(calculateMonthlyTransfers()).subtract(calculateMonthlyExpenses());
     }
 
     public TransactionResponse updateTransactionCategory(Long transactionId, Long categoryId) {
@@ -214,7 +227,7 @@ public class TransactionService {
 
 
 
-        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
+        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser()!= null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
 
     }
 

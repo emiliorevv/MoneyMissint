@@ -3,7 +3,6 @@ package com.example.moneymissint.controller;
 
 import com.example.moneymissint.DTO.TransactionRequest;
 import com.example.moneymissint.DTO.TransactionResponse;
-import com.example.moneymissint.model.User;
 import com.example.moneymissint.roles.Operation;
 import com.example.moneymissint.service.TransactionService;
 import jakarta.validation.Valid;
@@ -59,7 +58,7 @@ public class TransactionController {
 
     @GetMapping("/balance}")
     public ResponseEntity<BigDecimal> getBalance(){
-        BigDecimal balance = transactionService.balance();
+        BigDecimal balance = transactionService.balanceOfTheMonth();
         return ResponseEntity.status(HttpStatus.OK).body(balance);
     }
 
