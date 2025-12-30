@@ -212,7 +212,7 @@ public class TransactionService {
 
         Transaction transaction = transactionRepository.save(newtransaction);
 
-        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser().getId() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
+        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
 
     }
 
@@ -222,12 +222,12 @@ public class TransactionService {
 
         Transaction transaction = getTransactionOrThrow(transactionId);
         if (!user.getId().equals(transaction.getOriginUser().getId())){
-            throw new IllegalStateException("You are not the owner of this transaction");
+            throw new EntityNotFoundException("Transaction not found");
         }
 
 
 
-        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser()!= null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
+        return new TransactionResponse(transaction.getId(), transaction.getOperation(), transaction.getTransactionAmount(), (transaction.getCategory().getId() != null) ? transaction.getCategory().getId() : null, transaction.getOriginUser().getId(), (transaction.getDestinationUser() != null) ? transaction.getDestinationUser().getId() : null, transaction.getTransactionTime());
 
     }
 
