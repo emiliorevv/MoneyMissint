@@ -111,7 +111,7 @@ public class CategoryService {
         }
 
         if (!user.getId().equals(category.getUser().getId())){
-            throw new IllegalStateException("You are not the owner of this category");
+            throw new EntityNotFoundException("Category not found");
         }
 
         transactionRepository.clearCategoryByCategoryId(categoryId);

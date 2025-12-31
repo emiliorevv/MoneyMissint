@@ -18,5 +18,5 @@ public interface    CategoryRepository extends JpaRepository<Category, Long> {
 
     boolean existsByUserIdAndCategoryNameIgnoreCase(Long userId, String categoryName);
 
-    
+
 }
