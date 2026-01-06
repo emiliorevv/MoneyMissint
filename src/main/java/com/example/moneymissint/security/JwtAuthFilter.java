@@ -14,6 +14,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.IOException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 
 @Component
 @RequiredArgsConstructor
@@ -35,7 +37,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String authorizationHeader = request.getHeader("Authorization");
         final String token;
-        final String userEmail;
+        String userEmail = null;
 
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
             filterChain.doFilter(request, response);
@@ -44,7 +46,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         token = authorizationHeader.substring(7);
 
-        userEmail = jwtService.extractUsername(token);
+        try{
+            userEmail = jwtService.extractUsername(token);
+        } catch (ExpiredJwtException | MalformedJwtException e){
+            System.out.println("Token invalid: " + e.getMessage());
+        }
+
+
 
         if (userEmail != null  && SecurityContextHolder.getContext().getAuthentication() == null) {
 

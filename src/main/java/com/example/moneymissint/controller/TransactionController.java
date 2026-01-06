@@ -56,7 +56,7 @@ public class TransactionController {
         };
     }
 
-    @GetMapping("/balance}")
+    @GetMapping("/balance")
     public ResponseEntity<BigDecimal> getBalance(){
         BigDecimal balance = transactionService.balanceOfTheMonth();
         return ResponseEntity.status(HttpStatus.OK).body(balance);
