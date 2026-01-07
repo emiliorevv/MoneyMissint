@@ -21,7 +21,7 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @PostMapping({""})
+    @PostMapping
     public ResponseEntity<CategoryResponse> createCategory( @RequestBody @Valid CategoryRequest categoryRequest){
         CategoryResponse categoryResponse = categoryService.createCategory(categoryRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryResponse);
