@@ -80,7 +80,6 @@ The API exposes the following resources. Endpoints marked as 'Private' require a
 | :----- | :-------------------------------------- | :----------------------------------------------- | :------ |
 | POST   | `/api/v1/auth/register`                 | Registers a new user in the system               | Public  |
 | POST   | `/api/v1/auth/login`                    | Authenticates credentials and returns JWT token  | Public  |
-| GET    | `/api/v1/transactions`                  | Lists transactions with pagination               | Private |
 | POST   | `/api/v1/transactions`                  | Creates a new income or expense                  | Private |
 | GET    | `/api/v1/transactions/{id}`             | Retrieves details of a specific transaction      | Private |
 | PUT    | `/api/v1/transactions/{id}`             | Modifies data of an existing transaction         | Private |
