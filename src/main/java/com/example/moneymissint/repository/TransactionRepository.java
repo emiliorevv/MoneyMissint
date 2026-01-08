@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -29,5 +30,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Modifying
     @Query("update Transaction t set t.category = null where t.category.id = :categoryId")
     int clearCategoryByCategoryId(Long categoryId);
+
+    Optional<Transaction> getTransactionById(Long transactionId);
 
 }

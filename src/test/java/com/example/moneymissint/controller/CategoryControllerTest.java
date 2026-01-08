@@ -1,7 +1,6 @@
 package com.example.moneymissint.controller;
 
 import com.example.moneymissint.DTO.CategoryRequest;
-import com.example.moneymissint.DTO.UserRequest;
 import com.example.moneymissint.model.Category;
 import com.example.moneymissint.model.User;
 import com.example.moneymissint.repository.CategoryRepository;
@@ -10,15 +9,12 @@ import com.example.moneymissint.roles.Currency;
 import com.example.moneymissint.roles.Status;
 import com.example.moneymissint.utils.SecurityUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,7 +50,7 @@ public class CategoryControllerTest {
 
     @Test
     @DisplayName("Create category, it should return created successfully")
-    void createCategory() throws Exception {
+    void createCategory_shouldReturnCreated_WhenRequestIsValid() throws Exception {
         User user = new User();
         user.setName("emilio");
         user.setEmail("emilio@gmail.com");
