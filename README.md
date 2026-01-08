@@ -5,101 +5,101 @@
 ![Docker](https://img.shields.io/badge/Docker-Enabled-blue?style=flat-square&logo=docker)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-336791?style=flat-square&logo=postgresql)
 
-MoneyMissint es una API RESTful escalable diseñada para la gestión de finanzas personales. Implementa una arquitectura limpia para rastrear ingresos, gastos y categorías, asegurada mediante autenticación basada en tokens (JWT) y desplegable vía Docker.
+MoneyMissint is a scalable RESTful API designed for personal finance management. It implements a clean architecture to track income, expenses, and categories, secured by token-based authentication (JWT) and deployable via Docker.
 
-## Características Principales
+## Key Features
 
-* **Arquitectura:** Diseño en capas (Controller, Service, Repository) siguiendo principios SOLID.
-* **Seguridad:** Autenticación Stateless con JWT y Spring Security.
-* **Lógica de Negocio:** Validación de transacciones y cálculo optimizado de estadísticas mensuales.
-* **Infraestructura:** Configuración completa para despliegue en contenedores con Docker Compose.
-* **Calidad de Código:** Cobertura de pruebas de integración utilizando JUnit 5, MockMvc y H2.
-* **Documentación:** API documentada automáticamente con OpenAPI / Swagger.
+* **Architecture:** Layered design (Controller, Service, Repository) following SOLID principles.
+* **Security:** Stateless authentication using JWT and Spring Security.
+* **Business Logic:** Transaction validation and optimized calculation of monthly statistics.
+* **Infrastructure:** Full configuration for containerized deployment using Docker Compose.
+* **Code Quality:** Integration test coverage using JUnit 5, MockMvc, and H2.
+* **Documentation:** API automatically documented with OpenAPI / Swagger.
 
-## Stack Tecnológico
+## Tech Stack
 
-* **Lenguaje:** Java 21 (OpenJDK)
+* **Language:** Java 21 (OpenJDK)
 * **Framework:** Spring Boot 3
-* **Base de Datos:** PostgreSQL 14 (Producción), H2 (Testing)
-* **Construcción:** Maven
-* **Seguridad:** JJWT, Spring Security
+* **Database:** PostgreSQL 14 (Production), H2 (Testing)
+* **Build Tool:** Maven
+* **Security:** JJWT, Spring Security
 
-## Requisitos
+## Prerequisites
 
-* Docker Desktop (Recomendado)
+* Docker Desktop (Recommended)
 * Git
-* Java JDK 21 (Solo para ejecución manual sin Docker)
+* Java JDK 21 (Only for manual execution without Docker)
 
-## Instalación y Despliegue
+## Installation and Deployment
 
-### Opción A: Docker Compose (Recomendada)
+### Option A: Docker Compose (Recommended)
 
-Esta opción levanta la aplicación y la base de datos PostgreSQL en una red virtual aislada.
+This option spins up both the application and the PostgreSQL database within an isolated virtual network.
 
-1.  **Clonar el repositorio:**
+1.  **Clone the repository:**
     ```bash
     git clone [https://github.com/emiliorevv/MoneyMissint.git](https://github.com/emiliorevv/MoneyMissint.git)
     cd MoneyMissint
     ```
 
-2.  **Construir y ejecutar:**
+2.  **Build and run:**
     ```bash
     docker compose up --build
     ```
 
-3.  **Verificar despliegue:**
-    * Documentación API: http://localhost:8080/swagger-ui.html
+3.  **Verify deployment:**
+    * API Documentation: http://localhost:8080/swagger-ui.html
     * Health Check: http://localhost:8080/actuator/health
 
-### Opción B: Ejecución Manual
+### Option B: Manual Execution
 
-1.  Asegúrese de tener una instancia de PostgreSQL ejecutándose en el puerto `5432`.
-2.  Configure las variables de entorno en su IDE o sistema:
+1.  Ensure you have a PostgreSQL instance running on port `5432`.
+2.  Configure the environment variables in your IDE or system:
     * `SPRING_DATASOURCE_URL`
     * `SPRING_DATASOURCE_USERNAME`
     * `SPRING_DATASOURCE_PASSWORD`
     * `JWT_SECRET`
-3.  Ejecute la aplicación:
+3.  Run the application:
     ```bash
     ./mvnw spring-boot:run
     ```
 
-## Ejecución de Pruebas
+## Running Tests
 
-El proyecto incluye una suite de tests de integración para validar el flujo completo de la aplicación.
+The project includes a suite of integration tests to validate the full application flow.
 
 ```bash
 ./mvnw test
+
 ```
+## Main endpoints
 
-## Endpoints Principales
+The API exposes the following resources. Endpoints marked as 'Private' require a valid JWT token in the Authorization: Bearer <token> header.
 
-La API expone los siguientes recursos. Los endpoints marcados como 'Privado' requieren un token JWT válido en el encabezado `Authorization: Bearer <token>`.
-
-| Verbo  | Endpoint                                | Descripción                                      | Acceso  |
+| Verb   | Endpoint                                | Description                                      | Access  |
 | :----- | :-------------------------------------- | :----------------------------------------------- | :------ |
-| POST   | `/api/v1/auth/register`                 | Registra un nuevo usuario en el sistema          | Público |
-| POST   | `/api/v1/auth/login`                    | Autentica credenciales y devuelve token JWT      | Público |
-| GET    | `/api/v1/transactions`                  | Lista transacciones con paginación               | Privado |
-| POST   | `/api/v1/transactions`                  | Crea un nuevo ingreso o gasto                    | Privado |
-| GET    | `/api/v1/transactions/{id}`             | Obtiene el detalle de una transacción única      | Privado |
-| PUT    | `/api/v1/transactions/{id}`             | Modifica los datos de una transacción existente  | Privado |
-| DELETE | `/api/v1/transactions/{id}`             | Elimina (soft-delete) una transacción            | Privado |
-| GET    | `/api/v1/transactions/monthly-stats`    | Devuelve el resumen financiero del mes actual    | Privado |
-| GET    | `/api/v1/categories`                    | Lista las categorías disponibles para gastos     | Privado |
+| POST   | `/api/v1/auth/register`                 | Registers a new user in the system               | Public  |
+| POST   | `/api/v1/auth/login`                    | Authenticates credentials and returns JWT token  | Public  |
+| GET    | `/api/v1/transactions`                  | Lists transactions with pagination               | Private |
+| POST   | `/api/v1/transactions`                  | Creates a new income or expense                  | Private |
+| GET    | `/api/v1/transactions/{id}`             | Retrieves details of a specific transaction      | Private |
+| PUT    | `/api/v1/transactions/{id}`             | Modifies data of an existing transaction         | Private |
+| DELETE | `/api/v1/transactions/{id}`             | Removes (soft-delete) a transaction              | Private |
+| GET    | `/api/v1/transactions/monthly-stats`    | Returns the monthly stats of the current month   | Private |
+| GET    | `/api/v1/categories`                    | Lists available categories for operations        | Private |
 
-## Estructura del Proyecto
+## Project Structure
 
-El código sigue una arquitectura en capas para asegurar la separación de responsabilidades:
+The code follows a layered architecture to ensure separation of concerns:
 
 ```text
 src/main/java/com/example/moneymissint
-├── config          # Configuraciones globales (Security, OpenAPI, CORS)
-├── controller      # Capa REST: Maneja las peticiones HTTP y respuestas
-├── dto             # Objetos de Transferencia de Datos (Request/Response)
-├── exceptions      # Manejo global de errores y excepciones personalizadas
-├── model           # Entidades JPA que representan las tablas de la BD
-├── repository      # Interfaces que extienden JpaRepository para acceso a datos
-├── security        # Lógica de autenticación, filtros JWT y UserDetails
-├── service         # Lógica de negocio, validaciones y cálculos
-└── utils           # Clases auxiliares y componentes estáticos
+├── config          # Global configurations (Security, OpenAPI, CORS)
+├── controller      # REST Layer: Handles HTTP requests and responses
+├── dto             # Data Transfer Objects (Request/Response)
+├── exceptions      # Global error handling and custom exceptions
+├── model           # JPA Entities mapping DB tables
+├── repository      # Interfaces extending JpaRepository for data access
+├── security        # Authentication logic, JWT filters, and UserDetails
+├── service         # Business logic, validations, and calculations
+└── utils           # Utility classes and helper components
